@@ -15,6 +15,14 @@ public class SnakeGrowth : MonoBehaviour
             Destroy(other.gameObject); // Remove a comida da tela
         }
     }
+    // Método que faz a cobra crescer
+    void GrowSnake()
+    {
+        // Pega a última parte da cobra ou a cabeça, se ainda não houver corpo
+        Vector3 newPosition = (snakeParts.Count == 0) ? transform.position : snakeParts[snakeParts.Count - 1].transform.position;
 
-    
+        // Instancia uma nova parte do corpo e a adiciona à lista
+        GameObject newBodyPart = Instantiate(snakePrefab, newPosition, Quaternion.identity);
+        snakeParts.Add(newBodyPart);
+    }
 }
