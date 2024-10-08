@@ -4,35 +4,68 @@ using UnityEngine;
 
 public class SnakeMovement : MonoBehaviour
 {
-    public float speed = 0.1f;
-    private int moveX = 1;
-    private int moveY = 0;
+    public List<Transform> snakeBodyParts = new List<Transform>();
+    public GameObject snakeBodyPrefab;
+    public float moveSpeed = 0.5f;
+    private Vector2 moveDirection = Vector2.right;
+    private float stepTimer = 0f;
+
+    void Start()
+    {
+        // Inicializa a cobra com o primeiro corpo
+        InvokeRepeating(nameof(MoveSnake), moveSpeed, moveSpeed);
+    }
 
     void Update()
     {
-        // Controles movimentação com as setas do teclado
-        if (Input.GetKeyDown(KeyCode.W))
-        {
-            moveX = 0;
-            moveY = 1;
-        }
-        else if (Input.GetKeyDown(KeyCode.S))
-        {
-            moveX = 0;
-            moveY = -1;
-        }
-        else if (Input.GetKeyDown(KeyCode.A))
-        {
-            moveX = -1;
-            moveY = 0;
-        }
-        else if (Input.GetKeyDown(KeyCode.D))
-        {
-            moveX = 1;
-            moveY = 0;
-        }
+        // Controle de direção via teclado
+        if (Input.GetKeyDown(KeyCode.W) && moveDirection != Vector2.down) moveDirection = Vector2.up;
+        if (Input.GetKeyDown(KeyCode.S) && moveDirection != Vector2.up) moveDirection = Vector2.down;
+        if (Input.GetKeyDown(KeyCode.A) && moveDirection != Vector2.right) moveDirection = Vector2.left;
+        if (Input.GetKeyDown(KeyCode.D) && moveDirection != Vector2.left) moveDirection = Vector2.right;
+    }
 
-        // Move a cobra no eixo X e Y
-        transform.position = new Vector3(transform.position.x + moveX * speed, transform.position.y + moveY * speed, 0);
+    void MoveSnake()
+    {
+        // Movimenta a cobra
+        Vector2 previousPosition = transform.position;
+        transform.Translate(moveDirection);
+
+        // Teletransporte nas bordas do grid
+        if (transform.position.x >= GameManager.instance.gridSize)
+            transform.position = new Vector2(-GameManager.instance.gridSize, transform.position.y);
+        else if (transform.position.x < -GameManager.instance.gridSize)
+            transform.position = new Vector2(GameManager.instance.gridSize, transform.position.y);
+        else if (transform.position.y >= GameManager.instance.gridSize)
+            transform.position = new Vector2(transform.position.x, -GameManager.instance.gridSize);
+        else if (transform.position.y < -GameManager.instance.gridSize)
+            transform.position = new Vector2(transform.position.x, GameManager.instance.gridSize);
+
+        // Movimenta o corpo da cobra
+        for (int i = snakeBodyParts.Count - 1; i > 0; i--)
+        {
+            snakeBodyParts[i].position = snakeBodyParts[i - 1].position;
+        }
+        if (snakeBodyParts.Count > 0)
+            snakeBodyParts[0].position = previousPosition;
+    }
+
+    public void Grow()
+    {
+        // Adiciona uma nova parte do corpo quando comer comida
+        GameObject newPart = Instantiate(snakeBodyPrefab);
+        newPart.transform.position = snakeBodyParts[snakeBodyParts.Count - 1].position;
+        snakeBodyParts.Add(newPart.transform);
+    }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        // Verifica se colidiu com comida
+        if (other.CompareTag("Food"))
+        {
+            Grow();
+            Destroy(other.gameObject);
+            GameManager.instance.SpawnFood();
+        }
     }
 }
