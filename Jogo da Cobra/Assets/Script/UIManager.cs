@@ -5,7 +5,7 @@ public class UIManager : MonoBehaviour
 {
     public Slider speedSlider;
     public InputField gridSizeInput;
-    public Text speedValueText;
+    public TextMeshProUGUI speedValueText;
 
     void Start()
     {
